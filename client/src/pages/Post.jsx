@@ -396,7 +396,7 @@ const Post = () => {
 
       {post && (
         <IdeaStatus
-          currentStatus={post.ideaStatus || "brainstorm"}
+          currentStatus={post.ideaStatus || "draft"}
           onStatusChange={handleStatusChange}
           isAuthor={currentUser?._id === post.authorId}
         />

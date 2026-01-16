@@ -29,7 +29,11 @@ const statusConfig = {
 };
 
 const IdeaStatus = ({ currentStatus, onStatusChange, isAuthor = false }) => {
-  const status = statusConfig[currentStatus] || statusConfig.brainstorm;
+  const status = statusConfig[currentStatus] || statusConfig.draft;
+
+  if (!status) {
+    return null;
+  }
 
   if (!isAuthor) {
     return (
