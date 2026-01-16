@@ -2,17 +2,11 @@ import { Box, Chip, Select, MenuItem, Stack, Typography } from "@mui/material";
 import { useState } from "react";
 
 const statusConfig = {
-  brainstorm: {
-    label: "💡 Brainstorm",
+  draft: {
+    label: "📝 Draft",
     color: "#FFB366",
     bgColor: "#FFF3E0",
-    description: "Initial idea phase",
-  },
-  planning: {
-    label: "📋 Planning",
-    color: "#42A5F5",
-    bgColor: "#E3F2FD",
-    description: "Planning phase",
+    description: "Initial draft - not yet ready",
   },
   "in-progress": {
     label: "🚀 In Progress",
@@ -20,17 +14,17 @@ const statusConfig = {
     bgColor: "#E8F5E9",
     description: "Currently being worked on",
   },
-  completed: {
-    label: "✅ Completed",
+  implemented: {
+    label: "✅ Implemented",
     color: "#29B6F6",
     bgColor: "#E0F2F1",
-    description: "Idea completed",
+    description: "Successfully implemented",
   },
-  archived: {
-    label: "📦 Archived",
-    color: "#A1887F",
-    bgColor: "#EFEBE9",
-    description: "Archived idea",
+  dropped: {
+    label: "❌ Dropped",
+    color: "#EF5350",
+    bgColor: "#FFEBEE",
+    description: "Idea dropped or abandoned",
   },
 };
 
@@ -99,11 +93,10 @@ const IdeaStatus = ({ currentStatus, onStatusChange, isAuthor = false }) => {
             },
           }}
         >
-          <MenuItem value="brainstorm">💡 Brainstorm</MenuItem>
-          <MenuItem value="planning">📋 Planning</MenuItem>
+          <MenuItem value="draft">📝 Draft</MenuItem>
           <MenuItem value="in-progress">🚀 In Progress</MenuItem>
-          <MenuItem value="completed">✅ Completed</MenuItem>
-          <MenuItem value="archived">📦 Archived</MenuItem>
+          <MenuItem value="implemented">✅ Implemented</MenuItem>
+          <MenuItem value="dropped">❌ Dropped</MenuItem>
         </Select>
       </Stack>
     </Box>
