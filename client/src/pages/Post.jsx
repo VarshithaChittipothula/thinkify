@@ -17,7 +17,6 @@ import {
   Typography,
   Chip,
   Button,
-  TextField,
   Avatar,
   Box,
   Stack,
@@ -26,6 +25,8 @@ import useThinkify from "../hooks/useThinkify";
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import Cookies from "js-cookie";
+import CommentBox from "../../components/common/CommentBox";
+import CommentItem from "../../components/common/CommentItem";
 
 import {
   FacebookShareButton,
@@ -52,52 +53,31 @@ const Post = () => {
     setAlertMessage,
   } = useThinkify();
   const [post, setPost] = useState(null);
-  const [commentText, setCommentText] = useState("");
+  const [users, setUsers] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const cardRef = useRef();
+
   const renderMarkdown = (description) => {
     const html = marked(description);
     return { __html: DOMPurify.sanitize(html) };
   };
+
   useEffect(() => {
     const fetchData = async () => {
       setLoadingStatus(true);
       try {
-        const response = await axios.get(
+        // Fetch post
+        const postResponse = await axios.get(
           `${import.meta.env.VITE_SERVER_ENDPOINT}/posts/${postId}`
         );
-        if (response.data.status) {
-          setPost(response.data.post);
-        } else {
-          setLoadingStatus(false);
-          setAlertBoxOpenStatus(true);
-          setAlertSeverity(response.data.status ? "success" : "error");
-          setAlertMessage(response.data.message);
+        if (postResponse.data.status) {
+          setPost(postResponse.data.post);
         }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setLoadingStatus(false);
-        setAlertBoxOpenStatus(true);
-        setAlertSeverity("error");
-        setAlertMessage("Something Went Wrong");
-        error.response.data.message
-          ? setAlertMessage(error.response.data.message)
-          : setAlertMessage(error.message);
-      } finally {
-        setLoadingStatus(false);
-      }
-    };
-    fetchData();
-  }, []);
 
-  const handleComment = async () => {
-    if (commentText.trim()) {
-      const fetchData = async () => {
-        setLoadingStatus(true);
+        // Fetch users for mentions
         try {
-          const response = await axios.post(
-            `${import.meta.env.VITE_SERVER_ENDPOINT}/posts/${postId}/comment`,
-            {
-              comment: commentText,
-            },
+          const usersResponse = await axios.get(
+            `${import.meta.env.VITE_SERVER_ENDPOINT}/users/search/mention`,
             {
               headers: {
                 Authorization: `Bearer ${Cookies.get(
@@ -106,48 +86,94 @@ const Post = () => {
               },
             }
           );
-          if (response.data.status) {
-            setPost((prevPost) => {
-              return {
-                ...prevPost,
-                comments: [
-                  ...prevPost.comments,
-                  {
-                    comment: commentText,
-                    userId: Cookies.get(import.meta.env.VITE_USER_KEY),
-                    createdAt: new Date().toISOString(),
-                  },
-                ],
-              };
-            });
-            setCommentText("");
-            setAlertBoxOpenStatus(true);
-            setAlertSeverity("success");
-            setAlertMessage(response.data.message);
-          } else {
-            setLoadingStatus(false);
-            setAlertBoxOpenStatus(true);
-            setAlertSeverity(response.data.status ? "success" : "error");
-            setAlertMessage(response.data.message);
+          if (usersResponse.data.status && usersResponse.data.users) {
+            setUsers(usersResponse.data.users);
           }
-        } catch (error) {
-          console.error("Error fetching data:", error);
-          setLoadingStatus(false);
-          setAlertBoxOpenStatus(true);
-          setAlertSeverity("error");
-          setAlertMessage("Something Went Wrong");
-          error.response.data.message
-            ? setAlertMessage(error.response.data.message)
-            : setAlertMessage(error.message);
-        } finally {
-          setLoadingStatus(false);
+        } catch (err) {
+          console.warn("Could not fetch users for mentions");
         }
-      };
-      fetchData();
-    } else {
+
+        // Fetch current user
+        const token = Cookies.get(import.meta.env.VITE_TOKEN_KEY);
+        if (token) {
+          try {
+            const decoded = jwtDecode(token);
+            const userResponse = await axios.get(
+              `${import.meta.env.VITE_SERVER_ENDPOINT}/users/profile`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+            if (userResponse.data.status) {
+              setCurrentUser(userResponse.data.user);
+            }
+          } catch (err) {
+            console.warn("Could not fetch current user");
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setAlertBoxOpenStatus(true);
+        setAlertSeverity("error");
+        setAlertMessage("Something Went Wrong");
+      } finally {
+        setLoadingStatus(false);
+      }
+    };
+    fetchData();
+  }, [postId]);
+
+  const handleCommentSubmit = async (commentData) => {
+    try {
+      setLoadingStatus(true);
+      const response = await axios.post(
+        `${import.meta.env.VITE_SERVER_ENDPOINT}/posts/${postId}/comment`,
+        commentData,
+        {
+          headers: {
+            Authorization: `Bearer ${Cookies.get(
+              import.meta.env.VITE_TOKEN_KEY
+            )}`,
+          },
+        }
+      );
+
+      if (response.data.status) {
+        setPost((prevPost) => {
+          return {
+            ...prevPost,
+            comments: [
+              ...prevPost.comments,
+              {
+                comment: commentData.comment,
+                mentions: commentData.mentions || [],
+                userId: currentUser?._id,
+                createdAt: new Date().toISOString(),
+              },
+            ],
+          };
+        });
+        setAlertBoxOpenStatus(true);
+        setAlertSeverity("success");
+        setAlertMessage(response.data.message);
+      } else {
+        setAlertBoxOpenStatus(true);
+        setAlertSeverity("error");
+        setAlertMessage(response.data.message);
+      }
+    } catch (error) {
+      console.error("Error adding comment:", error);
       setAlertBoxOpenStatus(true);
       setAlertSeverity("error");
-      setAlertMessage("Comment Required");
+      setAlertMessage(
+        error.response?.data?.message || "Failed to add comment"
+      );
+    } finally {
+      setLoadingStatus(false);
+    }
+  };
     }
   };
 
@@ -364,45 +390,46 @@ const Post = () => {
       </Stack>
 
       {post && (
-        <Box sx={{ mt: 3 }}>
-          <TextField
-            fullWidth
-            variant="outlined"
-            placeholder="Add a comment..."
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            sx={{ mb: 2 }}
-            className="no-print"
-          />
-          <Button
-            variant="contained"
-            onClick={handleComment}
-            className="no-print"
-            sx={{ backgroundColor: "#1b2e35" }}
-          >
-            Comment
-          </Button>
+        <Box sx={{ mt: 3 }} className="no-print">
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" }}>
+            💬 Idea Collaboration & Comments
+          </Typography>
 
-          {post.comments.length > 0 &&
-            post.comments.map((comment, index) => (
-              <Box
-                key={index}
-                sx={{ display: "flex", alignItems: "center", mt: 2 }}
-              >
-                <Avatar sx={{ mr: 2 }}>{comment.userId}</Avatar>
-                <Box>
-                  <Typography variant="body2" sx={{ fontWeight: "bold" }}>
-                    {comment.comment}
-                  </Typography>
-                  <Typography variant="body2">
-                    {comment.commenter}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {new Date(comment.createdAt).toLocaleString()}
-                  </Typography>
-                </Box>
-              </Box>
-            ))}
+          {currentUser && (
+            <CommentBox
+              onCommentSubmit={handleCommentSubmit}
+              currentUser={currentUser}
+              postAuthor={post.author}
+              users={users}
+            />
+          )}
+
+          {post.comments && post.comments.length > 0 && (
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: "bold" }}>
+                {post.comments.length} {post.comments.length === 1 ? "Comment" : "Comments"}
+              </Typography>
+              {post.comments.map((comment, index) => {
+                const commentAuthor = users.find(
+                  (u) => u._id === comment.userId
+                );
+                const mentionedUsers = comment.mentions
+                  ? comment.mentions.map((mentionId) =>
+                      users.find((u) => u._id === mentionId)
+                    )
+                  : [];
+
+                return (
+                  <CommentItem
+                    key={index}
+                    comment={comment}
+                    author={commentAuthor}
+                    mentionedUsers={mentionedUsers}
+                  />
+                );
+              })}
+            </Box>
+          )}
         </Box>
       )}
     </CardContent>:

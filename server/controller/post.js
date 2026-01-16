@@ -180,7 +180,7 @@ const getSinglePost = async (req, res) => {
 const addComment = async (req, res) => {
     try {
         const { postId } = req.params;
-        const { comment } = req.body;
+        const { comment, mentions } = req.body;
         const userId = req.user._id.toString();
 
         if (!comment) {
@@ -192,13 +192,7 @@ const addComment = async (req, res) => {
             return res.status(404).json({ status: false, message: "Post not found" });
         }
 
-        const existingComment = post.comments.find(comment => comment.userId.toString() === userId.toString());
-
-        if (existingComment) {
-            return res.status(400).json({ status: false, message: "You have already commented on this post" });
-        }
-
-        post.comments.push({ userId, comment });
+        post.comments.push({ userId, comment, mentions: mentions || [] });
         const updatedPost = await post.save();
         if (updatedPost) {
             return res.status(201).json({ status: true, message: "Comment added successfully" });

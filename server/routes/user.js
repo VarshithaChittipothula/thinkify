@@ -9,6 +9,7 @@ user.post("/registration", registration);
 user.post("/login", login);
 user.get("/profile", userAuthentication, getUserData);
 user.get("/activity", userAuthentication, getUserActivity);
+user.get("/search/mention", userAuthentication, getUsers);
 user.put("/change-password", userAuthentication, changePassword);
 user.get("", adminAuthentication, getUsers);
 user.delete("/:userId", adminAuthentication, removeUser);
