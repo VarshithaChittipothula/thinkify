@@ -161,7 +161,8 @@ const getSinglePost = async (req, res) => {
                                 },
                                 comment: "$$comment.comment",
                                 createdAt: "$$comment.createdAt",
-                                commenter_id: "$$comment.userId"
+                                commenter_id: "$$comment.userId",
+                                mentions: "$$comment.mentions"
                             }
                         }
                     }

@@ -18,7 +18,9 @@ const registration = [
                 return res.status(400).json({ status: false, message: errors.array()[0].msg });
             }
 
-            const { fullName, email, password } = req.body;
+            const { fullName, email, password, role } = req.body;
+            const userRole = role && ["user", "teacher"].includes(role) ? role : "user";
+            
             const existingUser = await UserModel.findOne({ email });
             if (existingUser) {
                 return res.status(400).json({ status: false, message: "User already exists" });
@@ -33,18 +35,11 @@ const registration = [
                 email,
                 password: hashPassword,
                 createdAt: new Date(),
-                role: "user"
+                role: userRole
             });
             const savedUser = await userData.save();
             if (savedUser) {
                 const token = jwt.sign({ userId: savedUser._id }, process.env.JWT_SECRET_KEY, { expiresIn: process.env.COOKIE_EXPIRES });
-                // const expires = new Date(Date.now() + (parseInt(process.env.COOKIE_EXPIRES)) * 24 * 60 * 60 * 1000);
-                // res.cookie(process.env.COOKIE_KEY, token, {
-                //     httpOnly: false,
-                //     secure: true,
-                //     sameSite: 'none',
-                //     expires
-                // }).status(200).json({ status: true, message: "Registration Successful" });
                 res.json({ status: true, message: "Registration Successful", token, user: savedUser });
             } else {
                 res.status(500).json({ status: false, message: "Something Went Wrong" });

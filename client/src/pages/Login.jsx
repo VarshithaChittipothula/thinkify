@@ -59,6 +59,8 @@ const Login = () => {
         });
         if (response.data.user.role === "user") {
           navigate("/profile");
+        } else if (response.data.user.role === "teacher") {
+          navigate("/profile");
         } else if (response.data.user.role === "admin") {
           navigate("/dashboard");
         } else {
@@ -88,7 +90,7 @@ const Login = () => {
     const token = Cookies.get(import.meta.env.VITE_TOKEN_KEY);
     const role = Cookies.get(import.meta.env.VITE_USER_ROLE);
     if (token && role) {
-      if (role === "user") {
+      if (role === "user" || role === "teacher") {
         navigate("/profile");
       } else if (role === "admin") {
         navigate("/dashboard");

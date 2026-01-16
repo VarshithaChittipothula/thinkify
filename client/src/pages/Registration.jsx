@@ -1,4 +1,4 @@
-import { Box, Typography, TextField, Button, Divider } from "@mui/material";
+import { Box, Typography, TextField, Button, Divider, Select, MenuItem, FormControl, InputLabel } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
 import GoogleIcon from "@mui/icons-material/Google";
 import { useForm } from "react-hook-form";
@@ -21,6 +21,7 @@ const schema = yup.object().shape({
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/,
       "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
     ),
+  role: yup.string().oneOf(["user", "teacher"], "Invalid role").required("Role is required"),
 });
 
 const Registration = () => {
@@ -38,6 +39,7 @@ const Registration = () => {
       fullName: "",
       email: "",
       password: "",
+      role: "user",
     },
     resolver: yupResolver(schema),
   });
@@ -58,6 +60,8 @@ const Registration = () => {
           path: "",
         });
         if (response.data.user.role === "user") {
+          navigate("/profile");
+        } else if (response.data.user.role === "teacher") {
           navigate("/profile");
         } else if (response.data.user.role === "admin") {
           navigate("/dashboard");
@@ -87,7 +91,7 @@ const Registration = () => {
     const token = Cookies.get(import.meta.env.VITE_TOKEN_KEY);
     const role = Cookies.get(import.meta.env.VITE_USER_ROLE);
     if (token && role) {
-      if (role === "user") {
+      if (role === "user" || role === "teacher") {
         navigate("/profile");
       } else if (role === "admin") {
         navigate("/dashboard");
@@ -234,6 +238,36 @@ const Registration = () => {
               {errors.password && (
                 <Typography variant="p" component="p" sx={{ color: "red" }}>
                   {errors.password.message}
+                </Typography>
+              )}
+              <FormControl fullWidth sx={{ mb: 2, mt: 2 }}>
+                <InputLabel sx={{ color: "white" }}>Select Role</InputLabel>
+                <Select
+                  label="Select Role"
+                  {...register("role", { required: true })}
+                  sx={{
+                    color: "white",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "white",
+                    },
+                    "&:hover .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "white",
+                    },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "white",
+                    },
+                    "& .MuiSvgIcon-root": {
+                      color: "white",
+                    },
+                  }}
+                >
+                  <MenuItem value="user">Student</MenuItem>
+                  <MenuItem value="teacher">Teacher</MenuItem>
+                </Select>
+              </FormControl>
+              {errors.role && (
+                <Typography variant="p" component="p" sx={{ color: "red", mb: 2 }}>
+                  {errors.role.message}
                 </Typography>
               )}
               <Button
