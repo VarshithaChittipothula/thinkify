@@ -24,6 +24,11 @@ const postSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
+    ideaStatus: {
+        type: String,
+        enum: ["brainstorm", "planning", "in-progress", "completed", "archived"],
+        default: "brainstorm"
+    },
     createdAt: {
         type: Date,
         default: Date.now

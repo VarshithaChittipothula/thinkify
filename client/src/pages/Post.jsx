@@ -27,6 +27,7 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import CommentBox from "../../components/common/CommentBox";
 import CommentItem from "../../components/common/CommentItem";
+import IdeaStatus from "../../components/common/IdeaStatus";
 
 import {
   FacebookShareButton,
@@ -174,6 +175,39 @@ const Post = () => {
       setLoadingStatus(false);
     }
   };
+
+  const handleStatusChange = async (newStatus) => {
+    try {
+      setLoadingStatus(true);
+      // Update local state immediately
+      setPost((prevPost) => ({
+        ...prevPost,
+        ideaStatus: newStatus,
+      }));
+      
+      // Optionally send to backend if you want to persist status
+      // await axios.patch(
+      //   `${import.meta.env.VITE_SERVER_ENDPOINT}/posts/${postId}/status`,
+      //   { ideaStatus: newStatus },
+      //   {
+      //     headers: {
+      //       Authorization: `Bearer ${Cookies.get(
+      //         import.meta.env.VITE_TOKEN_KEY
+      //       )}`,
+      //     },
+      //   }
+      // );
+      
+      setAlertBoxOpenStatus(true);
+      setAlertSeverity("success");
+      setAlertMessage(`Idea status updated to: ${newStatus}`);
+    } catch (error) {
+      console.error("Error updating status:", error);
+      setAlertBoxOpenStatus(true);
+      setAlertSeverity("error");
+      setAlertMessage("Failed to update status");
+    } finally {
+      setLoadingStatus(false);
     }
   };
 
@@ -263,8 +297,6 @@ const Post = () => {
       setAlertMessage("Reaction Required");
     }
   };
-
-  const cardRef = useRef();
 
   const handlePrint = useReactToPrint({
     content: () => cardRef.current,
@@ -361,6 +393,14 @@ const Post = () => {
             />
           ))}
       </Stack>
+
+      {post && (
+        <IdeaStatus
+          currentStatus={post.ideaStatus || "brainstorm"}
+          onStatusChange={handleStatusChange}
+          isAuthor={currentUser?._id === post.authorId}
+        />
+      )}
 
       {post && (
         <Typography
