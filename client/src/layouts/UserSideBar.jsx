@@ -82,18 +82,14 @@ const UserSideBar = ({ children }) => {
   useEffect(() => {
     const token = Cookies.get(import.meta.env.VITE_TOKEN_KEY);
     const role = Cookies.get(import.meta.env.VITE_USER_ROLE);
-    if (token && role) {
-      if (role === "user") {
-        navigate("/profile");
-      } else if (role === "admin") {
-        navigate("/dashboard");
-      }
-    } else {
+    if (!token || !role) {
       Cookies.remove(import.meta.env.VITE_TOKEN_KEY, { path: "" });
       Cookies.remove(import.meta.env.VITE_USER_ROLE, { path: "" });
       navigate("/login");
+    } else if (role === "admin") {
+      navigate("/dashboard");
     }
-  }, []);
+  }, [navigate]);
 
   return (
     <div>
