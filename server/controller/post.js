@@ -15,6 +15,7 @@ const addPost = async (req, res) => {
             tags: tags || [],
             description,
             authorId,
+            ideaStatus: "draft",
             createdAt: new Date(),
         })
         const savedPost = await newPost.save();
@@ -123,6 +124,8 @@ const getSinglePost = async (req, res) => {
                     tags: 1,
                     description: 1,
                     createdAt: 1,
+                    ideaStatus: { $ifNull: ["$ideaStatus", "draft"] },
+                    authorId: 1,
                     "author": "$author.fullName",
                     reactions: {
                         $map: {
